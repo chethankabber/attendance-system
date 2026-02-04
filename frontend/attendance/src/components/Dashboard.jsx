@@ -36,7 +36,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-xl text-gray-400">Loading...</div>
+        <div className="text-xl text-gray-400">Loading...💿</div>
       </div>
     );
   }
@@ -57,7 +57,7 @@ const Dashboard = () => {
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">Today's Attendance</h1>
             <p className="text-gray-400">
-             <CalendarDays className="inline w-4 h-4 mr-1" /> {dashboardData?.date} • {dashboardData?.day}
+             <CalendarDays className="inline text-blue-400 w-4 h-4 mr-1" /> {dashboardData?.date} • {dashboardData?.day}
             </p>
           </div>
           <button
@@ -136,7 +136,7 @@ const Dashboard = () => {
               {dashboardData?.attendance.map((record) => (
                 <tr key={record.userId} className="hover:bg-darker transition-colors duration-150">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-white"><SquareUserRound className="inline mr-2 w-4 h-4" />{record.name}</div>
+                    <div className="text-sm font-medium text-white"><SquareUserRound className="inline text-blue-400 mr-2 w-4 h-4" />{record.name}</div>
                     <div className="text-sm text-gray-400">{record.email}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

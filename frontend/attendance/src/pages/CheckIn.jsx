@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Trash2, KeySquare} from 'lucide-react';
+import { Trash2, KeySquare } from 'lucide-react';
 
 const CheckIn = () => {
   const [password, setPassword] = useState('');
@@ -9,6 +9,8 @@ const CheckIn = () => {
   const [checkInTime, setCheckInTime] = useState('');
   const [loading, setLoading] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
+  const [action, setAction] = useState('');
+
 
   // Auto-reset message after 15 seconds
   useEffect(() => {
@@ -35,16 +37,17 @@ const CheckIn = () => {
       return;
     }
 
+    setAction(actionType);
     setMessage('');
     setLoading(true);
     setShowMessage(true);
 
     try {
       const response = await axios.post(`/api/attendance/${actionType}`, { password });
-      
+
       setMessage(response.data.message);
       setUserName(response.data.user?.name || '');
-      
+
       if (response.data.action === 'checkin' && response.data.user?.checkInTime) {
         setCheckInTime(new Date(response.data.user.checkInTime).toLocaleTimeString());
       }
@@ -68,7 +71,7 @@ const CheckIn = () => {
           <p className="text-gray-400">Enter your passkey and select action</p>
           <span><KeySquare className="inline w-4 h-4 text-gray-400 mt-2" /></span>
         </div>
-        
+
         {/* Password Input */}
         <div className="mb-8">
           <input
@@ -96,7 +99,7 @@ const CheckIn = () => {
             className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-6 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-green-500/50 transform hover:scale-105"
           >
             <div className="flex flex-col items-center space-y-2">
-              
+
               <span className="text-xl">CHECK IN</span>
             </div>
             {loading && (
@@ -114,7 +117,7 @@ const CheckIn = () => {
             className="group relative overflow-hidden bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-6 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-red-500/50 transform hover:scale-105"
           >
             <div className="flex flex-col items-center space-y-2">
-              
+
               <span className="text-xl">CHECK OUT</span>
             </div>
             {loading && (
@@ -127,24 +130,28 @@ const CheckIn = () => {
 
         {/* Success/Error Message */}
         {showMessage && message && (
-          <div className={`border rounded-xl p-6 text-center transition-all duration-300 transform ${
-            message.includes('Error') || message.includes('already') || message.includes('first') || message.includes('Invalid')
+          <div className={`border rounded-xl p-6 text-center transition-all duration-300 transform ${message.includes('Error') || message.includes('already') || message.includes('first') || message.includes('Invalid')
               ? 'bg-red-900 bg-opacity-20 border-red-800 text-red-400'
               : 'bg-primary bg-opacity-20 border-primary text-primary'
-          }`}>
+            }`}>
             <div className="flex flex-col items-center space-y-3">
               <div className="text-5xl">
-                {message.includes('Error') || message.includes('already') || message.includes('first') }
+                {message.includes('Error') || message.includes('already') || message.includes('first')}
               </div>
               <p className="text-lg font-semibold">{message}</p>
-              {userName && (
+              {userName && action === 'checkin' && (
                 <div className="space-y-1">
-                  <p className="text-2xl font-bold text-white">Welcome, {userName}!</p>
+                  <p className="text-2xl font-bold text-white">
+                    Welcome, {userName}!
+                  </p>
                   {checkInTime && (
-                    <p className="text-gray-400 text-sm">Check-in time: {checkInTime}</p>
+                    <p className="text-gray-400 text-sm">
+                      Check-in time: {checkInTime}
+                    </p>
                   )}
                 </div>
               )}
+
               <div className="flex items-center space-x-2 text-xs text-gray-500 mt-4">
                 <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -156,7 +163,7 @@ const CheckIn = () => {
           </div>
         )}
 
-        
+
 
         {/* Footer */}
         {/* <div className="mt-6 text-center">
