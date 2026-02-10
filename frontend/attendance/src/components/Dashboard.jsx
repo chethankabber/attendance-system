@@ -36,7 +36,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="text-xl text-gray-400">Loading...💿</div>
+        <div className="text-xl text-gray-400">Loading..💿</div>
       </div>
     );
   }
@@ -81,7 +81,6 @@ const Dashboard = () => {
                 {dashboardData?.attendance.filter(a => a.status === 'Present').length}
               </p>
             </div>
-            
           </div>
         </div>
 
@@ -94,7 +93,6 @@ const Dashboard = () => {
                 {dashboardData?.attendance.filter(a => a.status === 'Absent').length}
               </p>
             </div>
-            
           </div>
         </div>
 
@@ -118,16 +116,16 @@ const Dashboard = () => {
           <table className="w-full">
             <thead className="bg-darker border-b border-dark">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">
                   Employee Name
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">
                   Check In
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">
                   Check Out
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-200 uppercase tracking-wider">
                   Status
                 </th>
               </tr>

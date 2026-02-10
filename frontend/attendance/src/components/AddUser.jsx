@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Trash2, SquarePen, Eye, EyeOff, SquareUserRound, Mail, UserRoundPlus, Pencil, KeySquare} from 'lucide-react';
+import { Trash2, SquarePen, Eye, EyeOff, SquareUserRound, Mail, UserRoundPlus, Pencil, KeySquare } from 'lucide-react';
 
 const AddUser = () => {
   const [users, setUsers] = useState([]);
@@ -14,6 +14,9 @@ const AddUser = () => {
   const [showPasswords, setShowPasswords] = useState({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState(null);
+
 
   useEffect(() => {
     fetchUsers();
@@ -45,7 +48,7 @@ const AddUser = () => {
 
     try {
       const token = localStorage.getItem('token');
-      
+
       if (editMode) {
         await axios.put(`/api/users/update/${editUserId}`, formData, {
           headers: { Authorization: `Bearer ${token}` }
@@ -62,7 +65,7 @@ const AddUser = () => {
       setEditMode(false);
       setEditUserId(null);
       fetchUsers();
-      
+
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       setMessage(error.response?.data?.message || 'Error processing request');
@@ -82,23 +85,33 @@ const AddUser = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) {
-      return;
-    }
+  const handleDelete = (userId) => {
+    setDeleteUserId(userId);
+    setShowDeleteModal(true);
+  };
 
+  const confirmDelete = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`/api/users/delete/${userId}`, {
+
+      await axios.delete(`/api/users/delete/${deleteUserId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
       setMessage('User deleted successfully!');
       fetchUsers();
-      setTimeout(() => setMessage(''), 3000);
+
     } catch (error) {
       setMessage('Error deleting user');
+    } finally {
+      setShowDeleteModal(false);
+      setDeleteUserId(null);
+      setTimeout(() => setMessage(''), 3000);
     }
   };
+
+
+
 
   const cancelEdit = () => {
     setFormData({ name: '', email: '', password: '' });
@@ -117,17 +130,15 @@ const AddUser = () => {
     <div>
       {/* Header */}
       <div className="mb-6 mt-2">
-        <h1 className="text-3xl font-bold text-white mb-2">User Management</h1>
-        <p className="text-gray-400">Add, update, or delete users</p>
+        <h1 className="text-3xl font-bold text-white mb-2">Employee Management</h1>
       </div>
 
       {/* Message */}
       {message && (
-        <div className={`mb-4 p-4 rounded-lg border ${
-          message.includes('Error') || message.includes('deleted')
-            ? 'bg-red-900 bg-opacity-20 border-red-800 text-red-400'
-            : 'bg-primary bg-opacity-20 border-primary text-primary'
-        }`}>
+        <div className={`mb-4 p-4 rounded-lg border ${message.includes('Error') || message.includes('deleted')
+          ? 'bg-red-900 bg-opacity-20 border-red-800 text-red-400'
+          : 'bg-primary bg-opacity-20 border-primary text-primary'
+          }`}>
           {message}
         </div>
       )}
@@ -137,7 +148,7 @@ const AddUser = () => {
         <h2 className="text-xl font-semibold mb-4 text-white">
           {editMode ? 'Edit Employee' : 'Add New Employee'}
         </h2>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -168,7 +179,7 @@ const AddUser = () => {
 
             <div>
               <label className="block text-gray-400 font-medium mb-2">
-               <KeySquare className="inline mr-1 w-4 h-4" /> Password {editMode && <span className="text-xs">(leave empty to keep current)</span>}
+                <KeySquare className="inline mr-1 w-4 h-4" /> Password {editMode && <span className="text-xs">(leave empty to keep current)</span>}
               </label>
               <input
                 type="password"
@@ -188,9 +199,9 @@ const AddUser = () => {
               disabled={loading}
               className="bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white px-6 py-3 rounded-lg transition duration-200 disabled:bg-gray-700 disabled:cursor-not-allowed font-medium shadow-lg"
             >
-              {loading ? 'Processing...' : (editMode ? 'Update Employee' : 'Add Employee')} 
+              {loading ? 'Processing...' : (editMode ? 'Update Employee' : 'Add Employee')}
             </button>
-            
+
             {editMode && (
               <button
                 type="button"
@@ -209,7 +220,7 @@ const AddUser = () => {
         <div className="px-6 py-4 bg-darker border-b border-dark">
           <h2 className="text-xl font-semibold text-white">All Employee's ({users.length})</h2>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-darker border-b border-dark">
@@ -232,7 +243,7 @@ const AddUser = () => {
               {users.map((user) => (
                 <tr key={user._id} className="hover:bg-darker transition-colors duration-150">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-white"><SquareUserRound className="inline mr-2" />{user.name}</div>
+                    <div className="text-sm font-medium text-white"><SquareUserRound className="inline mr-2 text-blue-400" />{user.name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-300"><Mail className="inline mr-2" />{user.email}</div>
@@ -269,7 +280,7 @@ const AddUser = () => {
             </tbody>
           </table>
         </div>
-        
+
         {users.length === 0 && (
           <div className="text-center py-12 text-gray-500">
             <div className="text-5xl mb-4">📝</div>
@@ -277,6 +288,42 @@ const AddUser = () => {
           </div>
         )}
       </div>
+      {showDeleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
+
+          <div className="bg-card-dark border border-dark rounded-lg shadow-2xl p-6 w-[350px] text-center">
+
+            <h3 className="text-xl font-semibold text-white mb-3">
+              Delete Employee
+            </h3>
+
+            <p className="text-gray-200 mb-6">
+              Are you sure you want to delete this Emplooye?
+            </p>
+
+            <div className="flex justify-center gap-4">
+
+              <button
+                onClick={confirmDelete}
+                className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg transition"
+              >
+                Yes Delete
+              </button>
+
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="bg-dark hover:bg-darker text-gray-300 px-5 py-2 rounded-lg border border-dark"
+              >
+                Cancel
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
     </div>
   );
 };

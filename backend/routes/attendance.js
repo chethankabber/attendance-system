@@ -4,6 +4,7 @@ const router = express.Router();
 const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 const authMiddleware = require('../middleware/auth');
+const MonthSettings = require('../models/MonthSettings');
 
 // Separate Check-In endpoint
 router.post('/checkin', async (req, res) => {
@@ -164,8 +165,22 @@ router.get('/dashboard', authMiddleware, async (req, res) => {
   }
 });
 
+
 // Get monthly history
+// Day 1 → 8h
+// Day 2 → 7h
+// Total = 15h
+// Present Days = 2
+// Average = 15 / 2 = 7.5h → 7h 30m 
+
+// Day 3 → 2h
+// Total = 15h + 2h = 17h
+// Present Days = 3
+// Average = 17 / 3 ≈ 5.6h → 5h 36m
+
 router.get('/history', authMiddleware, async (req, res) => {
+
+
   try {
     const { month, year } = req.query;
 
@@ -175,7 +190,7 @@ router.get('/history', authMiddleware, async (req, res) => {
 
     const users = await User.find({ role: 'user' }).select('name email');
     const daysInMonth = new Date(year, month, 0).getDate();
-    
+
     const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
     const endDate = `${year}-${String(month).padStart(2, '0')}-${daysInMonth}`;
 
@@ -183,14 +198,44 @@ router.get('/history', authMiddleware, async (req, res) => {
       date: { $gte: startDate, $lte: endDate }
     });
 
+
+    const today = new Date();
+    const todayDate = today.getDate();
+    const todayMonth = today.getMonth() + 1;
+    const todayYear = today.getFullYear();
+
+    const isCurrentMonth =
+      Number(month) === todayMonth &&
+      Number(year) === todayYear;
+
     const historyData = users.map(user => {
+
       const userAttendance = attendanceRecords.filter(
         att => att.userId.toString() === user._id.toString()
       );
 
       const presentDays = userAttendance.length;
-      const absentDays = daysInMonth - presentDays;
 
+      // 🔥 Calculate completed working days only
+      let completedWorkingDays = 0;
+
+      for (let day = 1; day <= daysInMonth; day++) {
+
+        // Stop future days
+        if (isCurrentMonth && day > todayDate) break;
+
+        const dateObj = new Date(year, month - 1, day);
+        const dayOfWeek = dateObj.getDay();
+
+        // Skip Sunday & Saturday
+        if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+
+        completedWorkingDays++;
+      }
+
+      const absentDays = Math.max(completedWorkingDays - presentDays, 0);
+
+      // Work hour calculation (no change)
       let totalMinutes = 0;
       userAttendance.forEach(att => {
         if (att.checkOutTime) {
@@ -213,6 +258,7 @@ router.get('/history', authMiddleware, async (req, res) => {
       };
     });
 
+
     res.json({
       month: `${new Date(year, month - 1).toLocaleDateString('en-US', { month: 'long' })} ${year}`,
       totalDays: daysInMonth,
@@ -222,5 +268,54 @@ router.get('/history', authMiddleware, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+const getWeekendCount = (year, month) => {
+  let sundays = 0;
+  let saturdays = 0;
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month - 1, day);
+    const dayOfWeek = date.getDay();
+
+    if (dayOfWeek === 0) sundays++;
+    if (dayOfWeek === 6) saturdays++;
+  }
+
+  return { sundays, saturdays };
+};
+
+router.get('/month-settings', authMiddleware, async (req, res) => {
+  const { month, year } = req.query;
+
+  let settings = await MonthSettings.findOne({ month, year });
+
+  if (!settings) {
+    settings = await MonthSettings.create({
+      month,
+      year,
+      sundays: 0,
+      saturdays: 0
+    });
+  }
+
+  res.json(settings);
+});
+
+
+router.put('/month-settings', authMiddleware, async (req, res) => {
+  const { month, year, sundays, saturdays } = req.body;
+
+  const settings = await MonthSettings.findOneAndUpdate(
+    { month, year },
+    { sundays, saturdays },
+    { upsert: true, new: true }
+  );
+
+  res.json(settings);
+});
+
+
 
 module.exports = router;

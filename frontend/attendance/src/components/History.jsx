@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { SquareUserRound, Mail, FileText, Sheet, Clock, CalendarDays} from 'lucide-react';
+import { SquareUserRound, Mail, FileText, Sheet, Clock, CalendarDays } from 'lucide-react';
 
 
 const History = () => {
@@ -11,6 +11,9 @@ const History = () => {
   const [selectedYear, setSelectedYear] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [sundays, setSundays] = useState(0);
+  const [saturdays, setSaturdays] = useState(0);
+
 
   useEffect(() => {
     const now = new Date();
@@ -27,7 +30,7 @@ const History = () => {
   const fetchHistory = async () => {
     setLoading(true);
     setError('');
-    
+
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get('/api/attendance/history', {
@@ -45,16 +48,43 @@ const History = () => {
     }
   };
 
+  const fetchMonthSettings = async () => {
+    const token = localStorage.getItem('token');
+    const res = await axios.get('/api/attendance/month-settings', {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { month: selectedMonth, year: selectedYear }
+    });
+
+    setSundays(res.data.sundays);
+    setSaturdays(res.data.saturdays);
+  };
+
+  useEffect(() => {
+    if (selectedMonth && selectedYear) {
+      fetchMonthSettings();
+    }
+  }, [selectedMonth, selectedYear]);
+
+  const saveMonthSettings = async () => {
+    const token = localStorage.getItem('token');
+    await axios.put(
+      '/api/attendance/month-settings',
+      { month: selectedMonth, year: selectedYear, sundays, saturdays },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  };
+
+
   const downloadPDF = () => {
     const doc = new jsPDF();
-    
+
     doc.setFontSize(18);
     doc.text('Attendance Report', 14, 20);
-    
+
     doc.setFontSize(12);
     doc.text(`Period: ${historyData.month}`, 14, 30);
     doc.text(`Total Working Days: ${historyData.totalDays}`, 14, 37);
-    
+
     const tableData = historyData.history.map(record => [
       record.name,
       record.email,
@@ -62,7 +92,7 @@ const History = () => {
       record.totalAbsent,
       record.avgWorkHours
     ]);
-    
+
     doc.autoTable({
       head: [['Name', 'Email', 'Present', 'Absent', 'Avg Work Hours']],
       body: tableData,
@@ -70,19 +100,19 @@ const History = () => {
       theme: 'grid',
       headStyles: { fillColor: [6, 182, 212] }
     });
-    
+
     doc.save(`attendance-report-${selectedYear}-${selectedMonth}.pdf`);
   };
 
   const downloadExcel = () => {
     if (!historyData) return;
-    
+
     let csv = 'Name,Email,Total Present,Total Absent,Average Work Hours\n';
-    
+
     historyData.history.forEach(record => {
       csv += `${record.name},${record.email},${record.totalPresent},${record.totalAbsent},${record.avgWorkHours}\n`;
     });
-    
+
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -193,6 +223,48 @@ const History = () => {
             <h2 className="text-xl font-semibold text-white">
               {historyData.month} - {historyData.totalDays} Working Days
             </h2>
+            {/* {sundays || saturdays ? (
+              <p className="text-gray-400 text-sm mt-1">
+                (Including {sundays} Sundays and {saturdays} Saturdays)
+              </p>
+            ) : null} */}
+            <div className="bg-darker p-4 rounded-lg mt-0">
+              <div className="flex items-center gap-4 text-sm text-gray-300">
+
+                <div>
+                  weekends :
+                  <input
+                    type="number"
+                    value={sundays}
+                    onChange={(e) => setSundays(Number(e.target.value))}
+                    className="w-14 ml-2 px-2 bg-black border border-dark rounded"
+                  />
+                </div>
+
+                <div>
+                  Extra-Holidays :
+                  <input
+                    type="number"
+                    value={saturdays}
+                    onChange={(e) => setSaturdays(Number(e.target.value))}
+                    className="w-14 ml-2 px-2 bg-black border border-dark rounded"
+                  />
+                </div>
+
+                <div className="font-semibold text-primary">
+                  = {sundays + saturdays} Holidays
+                </div>
+
+                <button
+                  onClick={saveMonthSettings}
+                  className="ml-auto bg-primary px-4 py-1 rounded text-white"
+                >
+                  Save
+                </button>
+
+              </div>
+            </div>
+            {/* Month Settings */}
           </div>
 
           <div className="overflow-x-auto">
@@ -242,6 +314,7 @@ const History = () => {
                 ))}
               </tbody>
             </table>
+
           </div>
 
           {historyData.history.length === 0 && (
