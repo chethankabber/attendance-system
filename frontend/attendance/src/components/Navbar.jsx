@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import {LogOut} from 'lucide-react';
+
+import {LogOut, Power, } from 'lucide-react';
 
 const Navbar = ({ toggleSidebar }) => {
   const navigate = useNavigate();
@@ -41,12 +42,26 @@ const Navbar = ({ toggleSidebar }) => {
         Welcome, <span className="text-primary font-semibold">{manager.name}</span>
       </span>
 
-      <button
+      {/* <button
         onClick={handleLogout}
         className="bg-gradient-to-r from-secondary to-primary px-4 py-2 rounded-lg text-white font-medium"
       >
        Logout
-      </button>
+      </button> */}
+      <button
+                className="group text-sky-400 hover:text-red-400 transition-all duration-200 p-2 rounded-lg"
+               onClick={handleLogout}
+            >
+                <div className="flex items-center gap-2">
+                    <LogOut
+                        size={28}
+                        className="group-hover:scale-110 transition-transform"
+                    />
+                    <span className="group-hover:inline hidden font-medium">
+                        Logout
+                    </span>
+                </div>
+            </button>
     </div>
 
   </div>
